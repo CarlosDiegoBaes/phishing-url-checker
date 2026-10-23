@@ -20,6 +20,8 @@ from phishguard.verdict import Metrics
 
 SEED = 42
 TEST_SIZE = 0.2
+MIN_PRECISION = 0.80
+THRESHOLDS = tuple(step / 100 for step in range(5, 96))
 
 
 def split_features(
@@ -68,3 +70,36 @@ def metrics_from_probabilities(
         threshold=threshold,
         model_name=model_name,
     )
+
+
+def choose_threshold(
+    labels: np.ndarray,
+    probabilities: np.ndarray,
+    n_train: int,
+    model_name: str,
+    min_precision: float = MIN_PRECISION,
+) -> Metrics:
+    """Pick a threshold that raises recall while precision stays reasonable.
+
+    ``THRESHOLDS`` is the grid 0.05, 0.06, ... 0.95. Keep every cutoff whose
+    phishing precision is at least ``min_precision``. Among those, take the
+    highest recall. If two cutoffs tie on recall, take the higher cutoff,
+    which flags fewer legitimate URLs.
+
+    If no cutoff holds the precision floor, fall back to the highest F1
+    and break ties the same way. The returned ``Metrics`` are for the
+    labels and probabilities passed in, which the comparison script makes
+    the validation slice, not the final test set.
+    """
+    candidates = [
+        metrics_from_probabilities(labels, probabilities, threshold, n_train, model_name)
+        for threshold in THRESHOLDS
+    ]
+    qualified = [metrics for metrics in candidates if metrics.precision >= min_precision]
+    pool = qualified or candidates
+
+    def sort_key(metrics: Metrics) -> tuple[float, float]:
+        score = metrics.recall if qualified else metrics.f1
+        return (score, metrics.threshold)
+
+    return max(pool, key=sort_key)

@@ -8,4 +8,4 @@ from phishguard.pipeline import Pipeline
 from phishguard.verdict import Verdict
 
 __all__ = ["Pipeline", "Verdict"]
-__version__ = "0.1.0"
+__version__ = "0.2.0"

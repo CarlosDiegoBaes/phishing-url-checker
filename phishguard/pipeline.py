@@ -87,6 +87,7 @@ class Pipeline:
                 "model": self.model,
             },
             Path(path),
+            compress=3,
         )
 
     @classmethod

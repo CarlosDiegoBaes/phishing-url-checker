@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 from phishguard.cli import format_verdict, main
-from phishguard.models import LogisticModel
+from phishguard.models import LogisticModel, RandomForestModel
 from phishguard.pipeline import Pipeline
 from phishguard.verdict import RiskLevel, Verdict
 
@@ -52,6 +52,20 @@ def test_cli_prints_weights(
     output = capsys.readouterr().out
     assert "host_length" in output
     assert "digit_ratio" in output
+
+
+def test_cli_says_when_a_model_has_no_weights(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    training_urls: list[str],
+    training_labels: list[int],
+) -> None:
+    path = tmp_path / "model.joblib"
+    pipeline = Pipeline(model=RandomForestModel())
+    pipeline.fit(training_urls, training_labels)
+    pipeline.save(path)
+    main(["--model", str(path), "--weights"])
+    assert "no single weight" in capsys.readouterr().out
 
 
 def test_cli_missing_model_exits(tmp_path: Path) -> None:

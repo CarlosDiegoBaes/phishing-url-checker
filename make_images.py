@@ -31,16 +31,17 @@ plt.close(fig)
 
 with open("metrics.json", encoding="utf-8") as metrics_file:
     metrics = json.load(metrics_file)
-pairs = list(reversed(metrics["weights"]))
-names = [name for name, _weight in pairs]
-weights = [weight for _name, weight in pairs]
-fig, ax = plt.subplots(figsize=(9, 5.5), facecolor="#f5f3ee")
-ax.set_facecolor("#f5f3ee")
-ax.barh(names, weights, color=["#b5473a" if value > 0 else "#2f5d50" for value in weights])
-ax.axvline(0, color="#333", lw=0.8)
-ax.set_title("Logistic regression feature weights", fontsize=14, loc="left")
-ax.set_xlabel("weight (standardized)  ·  positive = phishing")
-for side in ("top", "right"):
-    ax.spines[side].set_visible(False)
-fig.tight_layout()
-fig.savefig("features.png", dpi=150, facecolor="#f5f3ee")
+pairs = list(reversed(metrics.get("weights") or []))
+if pairs:
+    names = [name for name, _weight in pairs]
+    weights = [weight for _name, weight in pairs]
+    fig, ax = plt.subplots(figsize=(9, 5.5), facecolor="#f5f3ee")
+    ax.set_facecolor("#f5f3ee")
+    ax.barh(names, weights, color=["#b5473a" if value > 0 else "#2f5d50" for value in weights])
+    ax.axvline(0, color="#333", lw=0.8)
+    ax.set_title("Logistic regression feature weights", fontsize=14, loc="left")
+    ax.set_xlabel("weight (standardized)  ·  positive = phishing")
+    for side in ("top", "right"):
+        ax.spines[side].set_visible(False)
+    fig.tight_layout()
+    fig.savefig("features.png", dpi=150, facecolor="#f5f3ee")
