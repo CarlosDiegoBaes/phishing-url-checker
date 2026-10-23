@@ -1,15 +1,10 @@
 https://www.grossmont.edu
-  verdict: LIKELY SAFE   p(phish) = 0.17
+  verdict: LIKELY SAFE   p(phish) = 0.22
 hxxp://paypal-account-verify[.]secure-login[.]tk/signin
   verdict: LIKELY PHISHING   p(phish) = 1.00
-  - keyword_hits (+6.67)
-  - risky_tld (+2.68)
-  - num_hyphens (+2.07)
   - no HTTPS
   - credential keyword in URL
 hxxps://bit[.]ly/3xYz
-  verdict: LIKELY PHISHING   p(phish) = 1.00
-  - is_shortener (+7.85)
-  - host_entropy (+0.37)
+  verdict: LIKELY PHISHING   p(phish) = 0.98
 https://www.github.com/CarlosDiegoBaes
-  verdict: LIKELY SAFE   p(phish) = 0.15
+  verdict: LIKELY SAFE   p(phish) = 0.22

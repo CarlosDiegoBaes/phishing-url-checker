@@ -1,4 +1,4 @@
-"""Train the logistic checker on PhiUSIIL and write ``model.joblib``.
+"""Train the checker on PhiUSIIL and write ``model.joblib``.
 
 The dataset stores ``1`` for a legitimate URL. This module flips that so
 ``1`` means phishing, which is the class precision and recall describe.
@@ -13,11 +13,13 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from phishguard.config import DEFAULT_MODEL, DEFAULT_THRESHOLD
 from phishguard.evaluate import metrics_from_probabilities, split_features
 from phishguard.features import LexicalExtractor
-from phishguard.models import LogisticModel
+from phishguard.models import LogisticModel, Model
 from phishguard.paths import DEFAULT_CSV, METRICS_PATH, MODEL_PATH
 from phishguard.pipeline import Pipeline
+from phishguard.registry import default_registry
 from phishguard.verdict import Metrics
 
 
@@ -33,17 +35,21 @@ def load_urls(path: Path) -> tuple[list[str], list[int]]:
     return urls, labels
 
 
-def train(urls: list[str], labels: list[int], threshold: float = 0.5) -> tuple[Pipeline, Metrics]:
-    """Fit logistic regression on the stratified training split and score the holdout.
+def fit_holdout(
+    urls: list[str],
+    labels: list[int],
+    model: Model,
+    threshold: float = 0.5,
+) -> tuple[Pipeline, Metrics]:
+    """Fit ``model`` on the stratified training split and score the holdout.
 
-    The saved model is fit only on the training rows, which is the same
-    procedure as the original ``train.py``.
+    The saved model sees only the training rows. Seed 42 and a 20% test
+    set match the original checker.
     """
     extractor = LexicalExtractor()
     features = extractor.transform(urls)
     label_array = np.asarray(labels)
     x_train, x_test, y_train, y_test = split_features(features, label_array)
-    model = LogisticModel()
     model.fit(x_train, y_train)
     metrics = metrics_from_probabilities(
         y_test,
@@ -54,6 +60,14 @@ def train(urls: list[str], labels: list[int], threshold: float = 0.5) -> tuple[P
     )
     pipeline = Pipeline(extractors=(extractor,), model=model, threshold=threshold)
     return pipeline, metrics
+
+
+def train(urls: list[str], labels: list[int], threshold: float = 0.5) -> tuple[Pipeline, Metrics]:
+    """Fit the baseline logistic regression and score it at ``threshold``.
+
+    The default threshold of 0.5 is the published baseline.
+    """
+    return fit_holdout(urls, labels, LogisticModel(), threshold)
 
 
 def metrics_payload(pipeline: Pipeline, metrics: Metrics) -> dict[str, object]:
@@ -71,7 +85,8 @@ def main() -> None:
             "See the README for the download link."
         )
     urls, labels = load_urls(DEFAULT_CSV)
-    pipeline, metrics = train(urls, labels)
+    model = default_registry().create(DEFAULT_MODEL)
+    pipeline, metrics = fit_holdout(urls, labels, model, DEFAULT_THRESHOLD)
     pipeline.save(MODEL_PATH)
     payload = metrics_payload(pipeline, metrics)
     METRICS_PATH.write_text(json.dumps(payload, indent=2) + "\n")

@@ -1,0 +1,206 @@
+{
+  "split": {
+    "seed": 42,
+    "test_size": 0.2,
+    "validation_fraction_of_train": 0.2,
+    "n_fit": 150908,
+    "n_validation": 37728,
+    "n_train": 188636,
+    "n_test": 47159
+  },
+  "rule": "On the validation slice, choose the threshold from 0.05 to 0.95 with the highest phishing recall whose precision is at least 0.80. Ties go to the higher threshold. If none qualify, use the highest F1. Then pick the model with the highest validation recall among those that still meet that precision floor. The test set is scored after that choice, on a model refit on the full training split.",
+  "min_precision": 0.8,
+  "models": {
+    "logistic": {
+      "test_at_0.5": {
+        "accuracy": 0.7929769503170127,
+        "precision": 0.8561765509702104,
+        "recall": 0.6206845311803457,
+        "f1": 0.7196554199569275,
+        "confusion": [
+          [
+            24865,
+            2105
+          ],
+          [
+            7658,
+            12531
+          ]
+        ],
+        "n_train": 188636,
+        "n_test": 47159,
+        "threshold": 0.5,
+        "model": "logistic"
+      },
+      "chosen_threshold": 0.44,
+      "validation_at_chosen_threshold": {
+        "accuracy": 0.7870547073791349,
+        "precision": 0.805187969924812,
+        "recall": 0.6630138682516097,
+        "f1": 0.7272171669156594,
+        "confusion": [
+          [
+            18985,
+            2591
+          ],
+          [
+            5443,
+            10709
+          ]
+        ],
+        "n_train": 150908,
+        "n_test": 37728,
+        "threshold": 0.44,
+        "model": "logistic"
+      },
+      "test_at_chosen_threshold": {
+        "accuracy": 0.7931677940583982,
+        "precision": 0.8127060233742883,
+        "recall": 0.6716528802813413,
+        "f1": 0.7354775722731464,
+        "confusion": [
+          [
+            23845,
+            3125
+          ],
+          [
+            6629,
+            13560
+          ]
+        ],
+        "n_train": 188636,
+        "n_test": 47159,
+        "threshold": 0.44,
+        "model": "logistic"
+      }
+    },
+    "random_forest": {
+      "test_at_0.5": {
+        "accuracy": 0.8104073453635573,
+        "precision": 0.8799486555870828,
+        "recall": 0.6451533013026896,
+        "f1": 0.7444771512674688,
+        "confusion": [
+          [
+            25193,
+            1777
+          ],
+          [
+            7164,
+            13025
+          ]
+        ],
+        "n_train": 188636,
+        "n_test": 47159,
+        "threshold": 0.5,
+        "model": "random_forest"
+      },
+      "chosen_threshold": 0.35,
+      "validation_at_chosen_threshold": {
+        "accuracy": 0.7974713740458015,
+        "precision": 0.8007633048271963,
+        "recall": 0.7014611193660227,
+        "f1": 0.7478301046170094,
+        "confusion": [
+          [
+            18757,
+            2819
+          ],
+          [
+            4822,
+            11330
+          ]
+        ],
+        "n_train": 150908,
+        "n_test": 37728,
+        "threshold": 0.35,
+        "model": "random_forest"
+      },
+      "test_at_chosen_threshold": {
+        "accuracy": 0.8019678110222863,
+        "precision": 0.8053585500394012,
+        "recall": 0.7087027589281292,
+        "f1": 0.7539454617309972,
+        "confusion": [
+          [
+            23512,
+            3458
+          ],
+          [
+            5881,
+            14308
+          ]
+        ],
+        "n_train": 188636,
+        "n_test": 47159,
+        "threshold": 0.35,
+        "model": "random_forest"
+      }
+    },
+    "gradient_boosting": {
+      "test_at_0.5": {
+        "accuracy": 0.8095379460972455,
+        "precision": 0.8781804683809138,
+        "recall": 0.64450938629947,
+        "f1": 0.7434154145003714,
+        "confusion": [
+          [
+            25165,
+            1805
+          ],
+          [
+            7177,
+            13012
+          ]
+        ],
+        "n_train": 188636,
+        "n_test": 47159,
+        "threshold": 0.5,
+        "model": "gradient_boosting"
+      },
+      "chosen_threshold": 0.38,
+      "validation_at_chosen_threshold": {
+        "accuracy": 0.7964376590330788,
+        "precision": 0.800638750887154,
+        "recall": 0.6984274393263992,
+        "f1": 0.7460485417631109,
+        "confusion": [
+          [
+            18767,
+            2809
+          ],
+          [
+            4871,
+            11281
+          ]
+        ],
+        "n_train": 150908,
+        "n_test": 37728,
+        "threshold": 0.38,
+        "model": "gradient_boosting"
+      },
+      "test_at_chosen_threshold": {
+        "accuracy": 0.7991687694819652,
+        "precision": 0.7987179487179488,
+        "recall": 0.7097429293179455,
+        "f1": 0.7516063888378924,
+        "confusion": [
+          [
+            23359,
+            3611
+          ],
+          [
+            5860,
+            14329
+          ]
+        ],
+        "n_train": 188636,
+        "n_test": 47159,
+        "threshold": 0.38,
+        "model": "gradient_boosting"
+      }
+    }
+  },
+  "winner": "random_forest",
+  "winner_threshold": 0.35
+}
