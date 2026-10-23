@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "phishguard"
+version = "0.1.0"
+description = "Score URLs for phishing risk with lexical features and scikit-learn."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "joblib==1.6.0",
+    "matplotlib==3.11.2",
+    "numpy==2.5.4",
+    "pandas==3.0.6",
+    "scikit-learn==1.9.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==9.1.1",
+    "ruff==0.17.2",
+]
+
+[project.scripts]
+phishguard = "phishguard.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["phishguard*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.per-file-ignores]
+"make_images.py" = ["E402"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-m 'not dataset'"
+markers = [
+    "dataset: needs data/PhiUSIIL_Phishing_URL_Dataset.csv; not run in CI",
+]
