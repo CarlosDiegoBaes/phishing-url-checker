@@ -15,7 +15,7 @@ COPY phishguard/ phishguard/
 COPY model.joblib .
 
 RUN useradd --create-home --uid 1000 app
-USER app
+USER 1000
 
 EXPOSE 8000
 

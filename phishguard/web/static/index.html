@@ -3,74 +3,156 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
   <title>phishguard · URL checker</title>
+  <link rel="preload" href="/static/fonts/inter-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/static/fonts/inter-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-  <main class="page">
-    <header>
-      <h1>phishguard</h1>
+  <a class="skip-link" href="#url">Skip to the URL field</a>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="phishguard home">
+        <svg class="brand-mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5l-8-3Z" fill="currentColor"/>
+          <path d="m8.5 12 2.5 2.5 4.5-5" fill="none" stroke="#fff" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span class="brand-name">phishguard</span>
+      </a>
+      <p id="model-info" class="model-info" hidden></p>
+    </div>
+  </header>
+
+  <main class="container main">
+    <section class="intro" aria-labelledby="page-title">
+      <h1 id="page-title">Check a link for phishing risk</h1>
       <p class="lede">
-        Paste a link to score it for phishing risk. Only the text of the link is read.
-        The page is never opened.
+        Paste a URL to score it with a lexical machine-learning model. Only the text of the
+        link is read. The page is never opened.
       </p>
-    </header>
-
-    <form id="check-form" class="card" autocomplete="off">
-      <label for="url">URL</label>
-      <div class="row">
-        <input id="url" name="url" type="text" spellcheck="false" maxlength="2048" required
-               placeholder="hxxp://paypal-account-verify[.]secure-login[.]tk/signin">
-        <button id="submit" type="submit">Check</button>
-      </div>
-      <p class="hint">Defanged links are fine: hxxp, [.], (.), and [:] are turned back into a normal URL.</p>
-    </form>
-
-    <p id="error" class="error" role="alert" hidden></p>
-
-    <section id="result" hidden aria-live="polite">
-      <div id="verdict" class="card verdict">
-        <div class="verdict-top">
-          <span id="band" class="band"></span>
-          <span id="score" class="score"></span>
-        </div>
-        <div class="meter" aria-hidden="true">
-          <div id="meter-fill" class="meter-fill"></div>
-          <div id="meter-threshold" class="meter-threshold"></div>
-        </div>
-        <p id="checked-url" class="checked-url"></p>
-        <p id="explanation" class="explanation"></p>
-      </div>
-
-      <div class="card">
-        <h2>Warning rules</h2>
-        <p class="note">Simple checks on the full URL. They are shown to you but are not inputs to the model.</p>
-        <ul id="flags" class="flags"></ul>
-      </div>
-
-      <div id="contributions-card" class="card" hidden>
-        <h2>Feature contributions</h2>
-        <p class="note">This model can report how far each feature pushed the score. Positive values push toward phishing.</p>
-        <table>
-          <tbody id="contributions"></tbody>
-        </table>
-      </div>
-
-      <div class="card">
-        <h2>What the model saw</h2>
-        <p id="features-note" class="note"></p>
-        <table>
-          <thead><tr><th>Feature</th><th class="num">Value</th></tr></thead>
-          <tbody id="features"></tbody>
-        </table>
-      </div>
     </section>
 
-    <footer>
+    <form id="check-form" class="card form-card" autocomplete="off" novalidate>
+      <label for="url" class="field-label">URL to check</label>
+      <div class="input-row">
+        <input id="url" name="url" type="text" inputmode="url" spellcheck="false"
+               autocapitalize="off" maxlength="2048" required aria-describedby="url-hint"
+               placeholder="hxxp://paypal-account-verify[.]secure-login[.]tk/signin">
+        <button id="submit" type="submit" class="button-primary">Check URL</button>
+      </div>
+      <p id="url-hint" class="hint">
+        Defanged links are fine: <code>hxxp</code>, <code>[.]</code>, <code>(.)</code>, and
+        <code>[:]</code> are turned back into a normal URL.
+      </p>
+      <div class="examples">
+        <span class="examples-label" id="examples-label">Try an example:</span>
+        <ul class="example-list" aria-labelledby="examples-label">
+          <li><button type="button" class="chip" data-url="https://www.wikipedia.org">wikipedia.org</button></li>
+          <li><button type="button" class="chip" data-url="hxxp://paypal-account-verify[.]secure-login[.]tk/signin">defanged phishing link</button></li>
+          <li><button type="button" class="chip" data-url="http://192.168.0.1/login">raw IP address</button></li>
+        </ul>
+      </div>
+    </form>
+
+    <div id="error" class="alert" role="alert" hidden></div>
+
+    <section id="result" class="result" hidden aria-live="polite" aria-labelledby="band">
+      <article id="verdict" class="card verdict">
+        <div class="verdict-head">
+          <span class="verdict-icon" aria-hidden="true">
+            <svg class="icon-safe" viewBox="0 0 24 24" focusable="false">
+              <path d="m6 12.5 4 4 8-9" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <svg class="icon-suspicious" viewBox="0 0 24 24" focusable="false">
+              <path d="M12 7v6" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+              <circle cx="12" cy="17" r="1.5" fill="currentColor"/>
+            </svg>
+            <svg class="icon-phishing" viewBox="0 0 24 24" focusable="false">
+              <path d="m7 7 10 10M17 7 7 17" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round"/>
+            </svg>
+          </span>
+          <div class="verdict-title">
+            <p class="eyebrow">Verdict</p>
+            <h2 id="band" class="band"></h2>
+          </div>
+          <div class="verdict-score">
+            <p class="eyebrow">Phishing score</p>
+            <p id="score" class="score-value mono"></p>
+          </div>
+        </div>
+
+        <div class="meter-wrap">
+          <div id="meter" class="meter" role="meter" aria-valuemin="0" aria-valuemax="1"
+               aria-label="Phishing score">
+            <div id="meter-fill" class="meter-fill"></div>
+            <div id="meter-threshold" class="meter-threshold">
+              <span id="meter-threshold-label" class="meter-threshold-label mono"></span>
+            </div>
+          </div>
+          <div class="meter-scale mono" aria-hidden="true">
+            <span>0.00</span><span>0.50</span><span>1.00</span>
+          </div>
+        </div>
+
+        <dl class="checked">
+          <div id="checked-input-row" class="checked-row" hidden>
+            <dt>You pasted</dt>
+            <dd id="checked-input" class="mono"></dd>
+          </div>
+          <div class="checked-row">
+            <dt>URL scored</dt>
+            <dd id="checked-url" class="mono"></dd>
+          </div>
+        </dl>
+
+        <p id="explanation" class="explanation"></p>
+      </article>
+
+      <section class="card" aria-labelledby="flags-title">
+        <div class="card-head">
+          <h2 id="flags-title">Warning rules</h2>
+          <span id="flags-count" class="count"></span>
+        </div>
+        <p class="note">Simple checks on the full URL. They are shown to you but are not inputs to the model.</p>
+        <ul id="flags" class="flags"></ul>
+      </section>
+
+      <section id="contributions-card" class="card" aria-labelledby="contrib-title" hidden>
+        <h2 id="contrib-title">Feature contributions</h2>
+        <p class="note">How far each feature pushed the score. Positive values push toward phishing.</p>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th scope="col">Feature</th><th scope="col" class="num">Contribution</th></tr></thead>
+            <tbody id="contributions"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card" aria-labelledby="features-title">
+        <h2 id="features-title">What the model saw</h2>
+        <p id="features-note" class="note"></p>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th scope="col">Feature</th><th scope="col" class="num">Value</th></tr></thead>
+            <tbody id="features"></tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
       A learning project, not a production security control. A lexical model cannot see page
       content, certificates, or domain reputation.
-    </footer>
-  </main>
+    </div>
+  </footer>
+
   <script src="/static/app.js"></script>
 </body>
 </html>

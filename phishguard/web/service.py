@@ -14,7 +14,7 @@ from pathlib import Path
 
 import numpy as np
 
-from phishguard.features import refang
+from phishguard.features import hostname_of, is_ip_address, refang
 from phishguard.paths import MODEL_PATH
 from phishguard.pipeline import Pipeline
 from phishguard.verdict import RiskLevel
@@ -56,6 +56,12 @@ FEATURE_INFO: dict[str, FeatureInfo] = {
         "URL shortener", "1 when the hostname is a known link shortener such as bit.ly."
     ),
 }
+
+
+IP_HOST_FLAG = (
+    "The link points to a raw IP address instead of a domain name. "
+    "Real websites almost always use a name, so be careful."
+)
 
 
 @dataclass(frozen=True)
@@ -126,9 +132,7 @@ class CheckService:
             self._feature_value(name, float(value))
             for name, value in zip(names, matrix[0].tolist(), strict=True)
         )
-        flags = tuple(
-            flag for extractor in self.pipeline.extractors for flag in extractor.rule_flags(url)
-        )
+        flags = self._rule_flags(url)
         contributions = self._contributions(matrix)
         is_phishing = verdict.probability >= self.threshold
         return CheckResult(
@@ -144,6 +148,19 @@ class CheckService:
             contributions=contributions,
             explanation=self._explain(verdict.probability, verdict.level, flags, contributions),
         )
+
+    def _rule_flags(self, url: str) -> tuple[str, ...]:
+        """Warnings from every extractor, plus a plain-English note for a raw IP host.
+
+        The IP note is a web-only warning. The model already sees the same fact
+        as its ``has_ip_host`` feature, so this does not change the score.
+        """
+        flags = [
+            flag for extractor in self.pipeline.extractors for flag in extractor.rule_flags(url)
+        ]
+        if is_ip_address(hostname_of(url)):
+            flags.append(IP_HOST_FLAG)
+        return tuple(flags)
 
     @staticmethod
     def _feature_value(name: str, value: float) -> FeatureValue:

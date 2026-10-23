@@ -17,7 +17,7 @@ from phishguard.models import LogisticModel
 from phishguard.paths import MODEL_PATH
 from phishguard.pipeline import Pipeline
 from phishguard.web import create_app
-from phishguard.web.service import CheckService
+from phishguard.web.service import IP_HOST_FLAG, CheckService
 
 DEFANGED = "hxxp://paypal-account-verify[.]secure-login[.]tk/signin"
 
@@ -70,6 +70,29 @@ def test_obvious_phishing_url_is_flagged(client: TestClient) -> None:
     assert "credential keyword in URL" in body["rule_flags"]
 
 
+@pytest.mark.parametrize(
+    "url",
+    [
+        "http://192.168.0.1/login",
+        "https://203.0.113.7:8443/",
+        "http://[2001:db8::1]/",
+        "10[.]0[.]0[.]1",
+    ],
+)
+def test_ip_address_host_gets_a_plain_english_flag(client: TestClient, url: str) -> None:
+    body = client.post("/check", json={"url": url}).json()
+    assert IP_HOST_FLAG in body["rule_flags"]
+    assert "raw IP address" in IP_HOST_FLAG
+
+
+@pytest.mark.parametrize(
+    "url", ["https://www.example.com", "https://1password.com", "http://192.168.0.1.evil.tk/"]
+)
+def test_named_host_gets_no_ip_flag(client: TestClient, url: str) -> None:
+    body = client.post("/check", json={"url": url}).json()
+    assert IP_HOST_FLAG not in body["rule_flags"]
+
+
 def test_verdict_agrees_with_threshold(client: TestClient) -> None:
     for url in ["https://www.github.com", DEFANGED, "https://bit.ly/3xYz"]:
         body = client.post("/check", json={"url": url}).json()
@@ -108,6 +131,13 @@ def test_index_serves_the_page(client: TestClient) -> None:
     assert '<form id="check-form"' in response.text
     assert client.get("/static/app.js").status_code == 200
     assert client.get("/static/style.css").status_code == 200
+
+
+def test_self_hosted_fonts_are_served(client: TestClient) -> None:
+    for name in ["inter-latin-400-normal", "jetbrains-mono-latin-400-normal"]:
+        response = client.get(f"/static/fonts/{name}.woff2")
+        assert response.status_code == 200
+        assert response.content[:4] == b"wOF2"
 
 
 def test_healthz(client: TestClient) -> None:
