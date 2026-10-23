@@ -9,15 +9,18 @@ description = "Score URLs for phishing risk with lexical features and scikit-lea
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "fastapi==0.161.1",
     "joblib==1.6.0",
     "matplotlib==3.11.2",
     "numpy==2.5.4",
     "pandas==3.0.6",
     "scikit-learn==1.9.1",
+    "uvicorn==0.54.0",
 ]
 
 [project.optional-dependencies]
 dev = [
+    "httpx==0.28.1",
     "pytest==9.1.1",
     "ruff==0.17.2",
 ]
@@ -27,6 +30,9 @@ phishguard = "phishguard.cli:main"
 
 [tool.setuptools.packages.find]
 include = ["phishguard*"]
+
+[tool.setuptools.package-data]
+"phishguard.web" = ["static/*"]
 
 [tool.ruff]
 line-length = 100

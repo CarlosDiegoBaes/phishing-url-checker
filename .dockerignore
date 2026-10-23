@@ -1,0 +1,16 @@
+.git/
+.github/
+.venv/
+data/
+tests/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+*.png
+demo_output.txt
+Dockerfile
+.dockerignore

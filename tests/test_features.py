@@ -32,6 +32,7 @@ def test_names_match_vector_length(extractor: LexicalExtractor) -> None:
 def test_refang_repairs_defanged_urls() -> None:
     assert refang("hxxps://bit[.]ly/3xYz") == "https://bit.ly/3xYz"
     assert refang("hxxp://evil[.]tk") == "http://evil.tk"
+    assert refang("HXXPS[:]//login(.)evil[.]tk") == "https://login.evil.tk"
 
 
 def test_www_prefix_is_ignored_for_length(extractor: LexicalExtractor) -> None:

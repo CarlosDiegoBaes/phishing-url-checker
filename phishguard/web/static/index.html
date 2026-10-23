@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>phishguard · URL checker</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <main class="page">
+    <header>
+      <h1>phishguard</h1>
+      <p class="lede">
+        Paste a link to score it for phishing risk. Only the text of the link is read.
+        The page is never opened.
+      </p>
+    </header>
+
+    <form id="check-form" class="card" autocomplete="off">
+      <label for="url">URL</label>
+      <div class="row">
+        <input id="url" name="url" type="text" spellcheck="false" maxlength="2048" required
+               placeholder="hxxp://paypal-account-verify[.]secure-login[.]tk/signin">
+        <button id="submit" type="submit">Check</button>
+      </div>
+      <p class="hint">Defanged links are fine: hxxp, [.], (.), and [:] are turned back into a normal URL.</p>
+    </form>
+
+    <p id="error" class="error" role="alert" hidden></p>
+
+    <section id="result" hidden aria-live="polite">
+      <div id="verdict" class="card verdict">
+        <div class="verdict-top">
+          <span id="band" class="band"></span>
+          <span id="score" class="score"></span>
+        </div>
+        <div class="meter" aria-hidden="true">
+          <div id="meter-fill" class="meter-fill"></div>
+          <div id="meter-threshold" class="meter-threshold"></div>
+        </div>
+        <p id="checked-url" class="checked-url"></p>
+        <p id="explanation" class="explanation"></p>
+      </div>
+
+      <div class="card">
+        <h2>Warning rules</h2>
+        <p class="note">Simple checks on the full URL. They are shown to you but are not inputs to the model.</p>
+        <ul id="flags" class="flags"></ul>
+      </div>
+
+      <div id="contributions-card" class="card" hidden>
+        <h2>Feature contributions</h2>
+        <p class="note">This model can report how far each feature pushed the score. Positive values push toward phishing.</p>
+        <table>
+          <tbody id="contributions"></tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h2>What the model saw</h2>
+        <p id="features-note" class="note"></p>
+        <table>
+          <thead><tr><th>Feature</th><th class="num">Value</th></tr></thead>
+          <tbody id="features"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer>
+      A learning project, not a production security control. A lexical model cannot see page
+      content, certificates, or domain reputation.
+    </footer>
+  </main>
+  <script src="/static/app.js"></script>
+</body>
+</html>

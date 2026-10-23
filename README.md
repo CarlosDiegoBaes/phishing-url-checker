@@ -27,6 +27,7 @@ The program is a package called `phishguard`. Each class has one job.
 | `phishguard/compare.py` | Fits all three models and writes `comparison.json` |
 | `phishguard/config.py` | The frozen model name and threshold that `train.py` uses |
 | `phishguard/cli.py` | The command-line checker |
+| `phishguard/web/` | The FastAPI app (`app.py`), `CheckService` (`service.py`), and the static page |
 | `checker.py`, `train.py`, `compare.py` | Short entry points that call the package |
 
 A few object-oriented ideas show up on purpose:
@@ -82,7 +83,7 @@ python compare.py
 ```
 
 `python -m phishguard` does the same thing as `python checker.py`. Defanged
-input (`hxxp`, `[.]`) is accepted. `train.py` writes `model.joblib` and
+input (`hxxp`, `[.]`, `(.)`, `[:]`) is accepted. `train.py` writes `model.joblib` and
 `metrics.json`. `compare.py` retrains all three models, rewrites those files
 with the winning model, and writes `comparison.json`, `confusion_matrix.png`,
 and `pr_curve.png`.
@@ -103,6 +104,51 @@ pytest
 `pytest -m dataset` also refits the logistic baseline and the shipped forest
 when `data/PhiUSIIL_Phishing_URL_Dataset.csv` is on disk. CI does not run that
 marker.
+
+## Web UI
+
+The same checker also runs as a small web app. `POST /check` scores one URL
+and `/` serves a single page where you paste a link and read the result. It
+loads the saved `model.joblib` with its saved threshold of 0.35. It does not
+retrain anything, and like the command line it never opens the URL.
+
+Run it locally from the project root:
+
+```bash
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn --factory phishguard.web:create_app --reload
+```
+
+Then open <http://127.0.0.1:8000>. `python -m phishguard.web` does the same
+thing without `--reload`.
+
+Or build and run it with Docker. The image copies `model.joblib` in, so the
+file must exist before you build:
+
+```bash
+docker build -t phishguard .
+docker run -p 8000:8000 phishguard
+```
+
+The API takes JSON. Defanged input (`hxxp`, `[.]`, `(.)`, `[:]`) is turned
+back into a normal URL first:
+
+```bash
+curl -s -X POST http://127.0.0.1:8000/check \
+  -H "Content-Type: application/json" \
+  -d '{"url": "hxxp://paypal-account-verify[.]secure-login[.]tk/signin"}'
+```
+
+The reply has `verdict` (`phishing` or `legitimate` at the threshold),
+`score` (the model's P(phishing)), `band` (LIKELY SAFE, SUSPICIOUS, or
+LIKELY PHISHING), `threshold`, the refanged `url`, and a plain-English
+`explanation`. It also lists `features`, which are the ten hostname values the
+model scored, and `rule_flags`, which are the full-URL warnings. The rule
+flags are not model inputs. `contributions` is `null` for the shipped forest,
+because a forest has no per-feature weights. The page shows the feature
+values in a fixed order and does not claim that any one of them caused the
+score. `GET /healthz` reports the loaded model and threshold.
 
 ## Dataset
 
