@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import ipaddress
 import math
+import re
 from abc import ABC, abstractmethod
 from collections import Counter
 from collections.abc import Sequence
@@ -21,11 +22,13 @@ import numpy as np
 def refang(url: str) -> str:
     """Turn a defanged URL back into text ``urlparse`` can read.
 
-    People write ``hxxp`` and ``[.]`` so a suspicious link is not clicked
-    by accident. ``hxxps`` becomes ``https`` because the letters ``hxxp``
-    are replaced first.
+    People write ``hxxp``, ``[.]``, ``(.)``, and ``[:]`` so a suspicious link
+    is not clicked by accident. ``hxxps`` becomes ``https`` because the
+    letters ``hxxp`` are replaced first. Any mix of case, such as ``HXXPS``,
+    comes back as lowercase ``https``.
     """
-    return url.replace("hxxp", "http").replace("[.]", ".")
+    url = re.sub("hxxp(s?)", lambda match: "http" + match.group(1).lower(), url, flags=re.I)
+    return url.replace("[.]", ".").replace("(.)", ".").replace("[:]", ":")
 
 
 def hostname_of(url: str) -> str:
